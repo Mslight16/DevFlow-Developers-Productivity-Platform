@@ -1,0 +1,1 @@
+alter table public.profiles drop column if exists github_access_token;
