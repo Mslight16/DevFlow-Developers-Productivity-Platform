@@ -1161,7 +1161,7 @@ button {
 .account-dialog {
   width: min(520px, calc(100vw - 32px));
   background: var(--panel);
-  background-color: #437164;
+  background-color: #e4e7e6;
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 24px;
@@ -1184,7 +1184,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 16px;
- background-color: #1d4335;
+ background-color: #708e84;
  padding: 20px;
 }
 
@@ -1194,7 +1194,7 @@ button {
   border-radius: 50%;
   overflow: hidden;
   background: #244f42;
-  color: #d8eee5;
+  color: #111413;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1219,7 +1219,7 @@ button {
 
 .account-field-label {
   font-size: 12px;
-  color: #7f8d87;
+  color: #0f1010;
 }
 
 .account-field strong {
