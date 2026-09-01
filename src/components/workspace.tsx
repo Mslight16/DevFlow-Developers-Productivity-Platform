@@ -644,6 +644,63 @@ const accountName =
                 </button>
               </div>
             )}
+
+            {accountOpen && (
+              <div className="modal-backdrop">
+                <section className="account-dialog">
+                  <div className="account-dialog-header">
+                    <div>
+                      <p className="eyebrow">Account</p>
+                      <h2>Account details</h2>
+                      <p className="subtitle">
+                        Manage your DevFlow account.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      onClick={() => setAccountOpen(false)}
+                      aria-label="Close account dialog"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div className="account-details">
+                    <div className="account-profile-preview">
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt={accountName} />
+                      ) : (
+                        <span>
+                          {accountName.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <div className="account-field">
+                      <span className="account-field-label">
+                        Display name
+                      </span>
+                      <strong>{accountName}</strong>
+                    </div>
+                    <div className="account-field">
+                      <span className="account-field-label">
+                        Email
+                      </span>
+                      <strong>
+                        {user?.email || "No email"}
+                      </strong>
+                    </div>
+                    <div className="account-actions">
+                      <button
+                        type="button"
+                        className="primary-button"
+                      >
+                        Edit profile
+                      </button>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            )}
           </div>
         </header>
 
