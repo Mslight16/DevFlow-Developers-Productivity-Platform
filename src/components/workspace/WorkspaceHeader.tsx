@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Image from "next/image";
 import { GitBranch, LogOut, Search, Settings, UserCircle } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
@@ -31,6 +32,7 @@ export function WorkspaceHeader({
   onOpenSettings: () => void;
   onSignOut: () => Promise<void>;
 }) {
+    const [editProfileOpen, setEditProfileOpen] = useState(false);
   return (
     <header className="topbar" style={{ position: "relative" }}>
       <div className="breadcrumbs">
@@ -393,14 +395,103 @@ export function WorkspaceHeader({
                 </div>
 
                 <div className="account-actions">
-                  <button type="button" className="primary-button">
-                    Edit profile
-                  </button>
-                </div>
+  <button
+    type="button"
+    className="primary-button"
+    onClick={() => setEditProfileOpen(true)}
+  >
+    Edit profile
+  </button>
+</div>
               </div>
             </section>
           </div>
         )}
+        {editProfileOpen && (
+  <div className="modal-backdrop">
+    <section className="account-dialog">
+      <div className="account-dialog-header">
+        <div>
+          <p className="eyebrow">Account</p>
+          <h2>Edit profile</h2>
+          <p className="subtitle">
+            Update your profile information.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className="icon-button"
+          onClick={() => setEditProfileOpen(false)}
+          aria-label="Close edit profile dialog"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="account-details">
+        <div className="account-profile-preview">
+          {avatarUrl ? (
+            <Image
+              src={avatarUrl}
+              alt={accountName}
+              width={64}
+              height={64}
+              unoptimized
+            />
+          ) : (
+            <span>
+              {accountName.charAt(0).toUpperCase()}
+            </span>
+          )}
+        </div>
+
+        <div className="account-field">
+          <label className="account-field-label">
+            Display name
+          </label>
+
+          <input
+            type="text"
+            defaultValue={accountName}
+            className="input"
+          />
+        </div>
+
+        <div className="account-field">
+          <label className="account-field-label">
+            Email
+          </label>
+
+          <input
+            type="email"
+            value={user?.email || ""}
+            disabled
+            className="input"
+          />
+        </div>
+
+        <div className="account-actions">
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => setEditProfileOpen(false)}
+          >
+            Save Changes
+          </button>
+
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => setEditProfileOpen(false)}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+)}
       </div>
     </header>
   );
