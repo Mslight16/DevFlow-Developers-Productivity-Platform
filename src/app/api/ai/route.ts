@@ -9,7 +9,13 @@ export async function POST(request: Request) {
     const result = await generateWithFallback(body.prompt);
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
-    const message = error instanceof z.ZodError ? "Prompt must be between 1 and 12,000 characters." : "AI providers are unavailable. Check configuration and try again.";
-    return NextResponse.json({ success: false, error: message }, { status: error instanceof z.ZodError ? 400 : 503 });
+    const message =
+      error instanceof z.ZodError
+        ? "Prompt must be between 1 and 12,000 characters."
+        : "AI providers are unavailable. Check configuration and try again.";
+    return NextResponse.json(
+      { success: false, error: message },
+      { status: error instanceof z.ZodError ? 400 : 503 },
+    );
   }
 }
