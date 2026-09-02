@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Image from "next/image";
+import { createClient } from "@/lib/supabase/browser";
 import { GitBranch, LogOut, Search, Settings, UserCircle } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
@@ -32,7 +33,86 @@ export function WorkspaceHeader({
   onOpenSettings: () => void;
   onSignOut: () => Promise<void>;
 }) {
-    const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [displayName, setDisplayName] = useState(accountName);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileError, setProfileError] = useState("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState(avatarUrl || "");
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  async function saveProfile() {
+    const trimmedName = displayName.trim();
+
+    if (!trimmedName) {
+      setProfileError("Display name cannot be empty.");
+      return;
+    }
+
+    setSavingProfile(true);
+    setProfileError("");
+
+    const supabase = createClient();
+
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        display_name: trimmedName,
+      },
+    });
+
+    if (error) {
+      setProfileError(error.message);
+      setSavingProfile(false);
+      return;
+    }
+
+    setEditProfileOpen(false);
+    setSavingProfile(false);
+  }
+
+  async function uploadAvatar() {
+    if (!avatarFile || !user) return;
+
+    setUploadingAvatar(true);
+    setProfileError("");
+
+    const supabase = createClient();
+
+    const fileExtension = avatarFile.name.split(".").pop() || "jpg";
+    const filePath = `${user.id}/avatar.${fileExtension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(filePath, avatarFile, {
+        upsert: true,
+        contentType: avatarFile.type,
+      });
+
+    if (uploadError) {
+      setProfileError(uploadError.message);
+      setUploadingAvatar(false);
+      return;
+    }
+
+    const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
+
+    const { error: updateError } = await supabase.auth.updateUser({
+      data: {
+        avatar_url: data.publicUrl,
+      },
+    });
+
+    if (updateError) {
+      setProfileError(updateError.message);
+      setUploadingAvatar(false);
+      return;
+    }
+
+    setAvatarPreview(data.publicUrl);
+    setAvatarFile(null);
+    setUploadingAvatar(false);
+  }
+
   return (
     <header className="topbar" style={{ position: "relative" }}>
       <div className="breadcrumbs">
@@ -52,7 +132,9 @@ export function WorkspaceHeader({
         />
       </label>
 
-      <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+      <div
+        style={{ position: "relative", display: "flex", alignItems: "center" }}
+      >
         <button
           type="button"
           className="icon-button"
@@ -378,7 +460,13 @@ export function WorkspaceHeader({
               <div className="account-details">
                 <div className="account-profile-preview">
                   {avatarUrl ? (
-                    <Image src={avatarUrl} alt={accountName} width={64} height={64} unoptimized />
+                    <Image
+                      src={avatarUrl}
+                      alt={accountName}
+                      width={64}
+                      height={64}
+                      unoptimized
+                    />
                   ) : (
                     <span>{accountName.charAt(0).toUpperCase()}</span>
                   )}
@@ -395,103 +483,126 @@ export function WorkspaceHeader({
                 </div>
 
                 <div className="account-actions">
-  <button
-    type="button"
-    className="primary-button"
-    onClick={() => setEditProfileOpen(true)}
-  >
-    Edit profile
-  </button>
-</div>
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={() => {
+                      setDisplayName(accountName);
+                      setProfileError("");
+                      setEditProfileOpen(true);
+                    }}
+                  >
+                    Edit profile
+                  </button>
+                </div>
               </div>
             </section>
           </div>
         )}
         {editProfileOpen && (
-  <div className="modal-backdrop">
-    <section className="account-dialog">
-      <div className="account-dialog-header">
-        <div>
-          <p className="eyebrow">Account</p>
-          <h2>Edit profile</h2>
-          <p className="subtitle">
-            Update your profile information.
-          </p>
-        </div>
+          <div className="modal-backdrop">
+            <section className="account-dialog">
+              <div className="account-dialog-header">
+                <div>
+                  <p className="eyebrow">Account</p>
+                  <h2>Edit profile</h2>
+                  <p className="subtitle">Update your profile information.</p>
+                </div>
 
-        <button
-          type="button"
-          className="icon-button"
-          onClick={() => setEditProfileOpen(false)}
-          aria-label="Close edit profile dialog"
-        >
-          ×
-        </button>
-      </div>
+                <button
+                  type="button"
+                  className="icon-button"
+                  onClick={() => setEditProfileOpen(false)}
+                  aria-label="Close edit profile dialog"
+                >
+                  ×
+                </button>
+              </div>
 
-      <div className="account-details">
-        <div className="account-profile-preview">
-          {avatarUrl ? (
-            <Image
-              src={avatarUrl}
-              alt={accountName}
-              width={64}
-              height={64}
-              unoptimized
-            />
-          ) : (
-            <span>
-              {accountName.charAt(0).toUpperCase()}
-            </span>
-          )}
-        </div>
+              <div className="account-details">
+                <div className="account-profile-preview">
+                  {avatarPreview ? (
+                    <Image
+                      src={avatarPreview}
+                      alt="Profile"
+                      width={64}
+                      height={64}
+                      className="account-profile-image"
+                    />
+                  ) : (
+                    <span>{accountName.charAt(0).toUpperCase()}</span>
+                  )}
+                </div>
 
-        <div className="account-field">
-          <label className="account-field-label">
-            Display name
-          </label>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0] || null;
 
-          <input
-            type="text"
-            defaultValue={accountName}
-            className="input"
-          />
-        </div>
+                    if (!file) return;
 
-        <div className="account-field">
-          <label className="account-field-label">
-            Email
-          </label>
+                    setAvatarFile(file);
+                    setAvatarPreview(URL.createObjectURL(file));
+                  }}
+                  className="input"
+                />
 
-          <input
-            type="email"
-            value={user?.email || ""}
-            disabled
-            className="input"
-          />
-        </div>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => void uploadAvatar()}
+                  disabled={!avatarFile || uploadingAvatar}
+                >
+                  {uploadingAvatar ? "Uploading..." : "Upload picture"}
+                </button>
 
-        <div className="account-actions">
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() => setEditProfileOpen(false)}
-          >
-            Save Changes
-          </button>
+                <div className="account-field">
+                  <label className="account-field-label">Display name</label>
 
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => setEditProfileOpen(false)}
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </section>
-  </div>
-)}
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(event) => setDisplayName(event.target.value)}
+                    className="input"
+                    required
+                  />
+                  {profileError && <p className="form-error">{profileError}</p>}
+                </div>
+
+                <div className="account-field">
+                  <label className="account-field-label">Email</label>
+
+                  <input
+                    type="email"
+                    value={user?.email || ""}
+                    disabled
+                    className="input"
+                  />
+                </div>
+
+                <div className="account-actions">
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={() => void saveProfile()}
+                    disabled={savingProfile}
+                  >
+                    {savingProfile ? "Saving..." : "Save Changes"}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => setEditProfileOpen(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
       </div>
     </header>
   );
