@@ -34,6 +34,8 @@ export function WorkspaceHeader({
   onSignOut: () => Promise<void>;
 }) {
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [displayName, setDisplayName] = useState(accountName);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState("");
@@ -111,6 +113,25 @@ export function WorkspaceHeader({
     setAvatarPreview(data.publicUrl);
     setAvatarFile(null);
     setUploadingAvatar(false);
+  }
+
+  async function deleteAccount() {
+    try {
+      const response = await fetch("/api/account/delete", {
+        method: "DELETE",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(result.error || "Failed to delete your account.");
+        return;
+      }
+
+      window.location.href = "/login";
+    } catch {
+      alert("Something went wrong while deleting your account.");
+    }
   }
 
   return (
@@ -494,6 +515,14 @@ export function WorkspaceHeader({
                   >
                     Edit profile
                   </button>
+
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => setDeleteAccountOpen(true)}
+                  >
+                    Delete account
+                  </button>
                 </div>
               </div>
             </section>
@@ -597,6 +626,108 @@ export function WorkspaceHeader({
                     onClick={() => setEditProfileOpen(false)}
                   >
                     Cancel
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
+        {deleteAccountOpen && (
+          <div className="modal-backdrop">
+            <section className="account-dialog">
+              <div className="account-dialog-header">
+                <div>
+                  <p className="eyebrow">Danger zone</p>
+                  <h2>Delete account?</h2>
+                  <p className="subtitle">
+                    Are you sure you want to delete your DevFlow account? This
+                    action cannot be undone.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="icon-button"
+                  onClick={() => setDeleteAccountOpen(false)}
+                  aria-label="Close delete account dialog"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="account-details">
+                <p className="form-error">
+                  Your account and associated data may be permanently deleted.
+                </p>
+
+                <div className="account-actions">
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => setDeleteAccountOpen(false)}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={() => {
+                      setDeleteAccountOpen(false);
+                      setDeleteConfirmOpen(true);
+                    }}
+                  >
+                    Delete account
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
+        {deleteConfirmOpen && (
+          <div className="modal-backdrop">
+            <section className="account-dialog">
+              <div className="account-dialog-header">
+                <div>
+                  <p className="eyebrow">Final confirmation</p>
+                  <h2>Are you absolutely sure?</h2>
+                  <p className="subtitle">
+                    This will permanently delete your DevFlow account. You will
+                    not be able to recover it.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="icon-button"
+                  onClick={() => setDeleteConfirmOpen(false)}
+                  aria-label="Close confirmation dialog"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="account-details">
+                <p className="form-error">
+                  Please confirm that you really want to permanently delete your
+                  account.
+                </p>
+
+                <div className="account-actions">
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => setDeleteConfirmOpen(false)}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={() => void deleteAccount()}
+                  >
+                    Yes, delete my account
                   </button>
                 </div>
               </div>
