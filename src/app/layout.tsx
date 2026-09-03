@@ -13,12 +13,12 @@ export const metadata: Metadata = {
   description: "A focused workspace for developers to plan, build, and ship.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`h-full antialiased ${inter.variable}`}>
-      <body className="min-h-full">
-        {children}
-      </body>
+    <html lang="en" className={inter.variable}>
+      <body>{children}</body>
     </html>
   );
 }

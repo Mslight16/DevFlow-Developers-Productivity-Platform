@@ -133,7 +133,7 @@ export function WorkspaceContent({
 
   return (
     <>
-      <div className="stats-grid">
+     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-5">
         <Stat title="Projects" value={String(projects.length)} />
 
         <Stat
@@ -149,15 +149,20 @@ export function WorkspaceContent({
         <Stat title="Snippets" value={String(snippets.length)} />
       </div>
 
-      <div className="panel">
-        <div className="panel-heading">
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow)]">
+        <div className="mb-5 flex items-center justify-between gap-4">
           <div>
             <h2>Recent tasks</h2>
 
             <p>Live Supabase data</p>
           </div>
 
-          <button className="text-button" onClick={onNew}>Add task</button>
+          <button
+  className="rounded-xl px-4 py-2 text-sm font-semibold text-[var(--accent)] transition-all hover:bg-[var(--accent-soft)]"
+  onClick={onNew}
+>
+  Add task
+</button>
         </div>
 
         {tasks.slice(0, 6).map((task) => (
@@ -473,17 +478,25 @@ function AI() {
 
 function Stat({ title, value }: { title: string; value: string }) {
   return (
-    <div className="stat-card">
-      <div className="stat-icon green">
-        <Check size={18} />
-      </div>
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-hover)]">
+      <div className="flex items-center gap-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-soft)] text-[var(--accent)] shadow-[var(--shadow-inset)]">
+          <Check size={18} />
+        </div>
 
-      <div>
-        <span>{title}</span>
+        <div className="min-w-0">
+          <span className="block text-sm font-medium text-[var(--text-muted)]">
+            {title}
+          </span>
 
-        <strong>{value}</strong>
+          <strong className="mt-1 block text-2xl font-bold tracking-tight text-[var(--text)]">
+            {value}
+          </strong>
 
-        <small>Live workspace data</small>
+          <small className="mt-1 block text-xs text-[var(--text-muted)]">
+            Live workspace data
+          </small>
+        </div>
       </div>
     </div>
   );
