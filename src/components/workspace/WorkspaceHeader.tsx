@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/browser";
-import { GitBranch, LogOut, Search, Settings, UserCircle } from "lucide-react";
+import { GitBranch, LogOut, Search, UserCircle } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
 export function WorkspaceHeader({
@@ -156,26 +156,6 @@ export function WorkspaceHeader({
       <div
         style={{ position: "relative", display: "flex", alignItems: "center" }}
       >
-        <button
-          type="button"
-          className="icon-button"
-          aria-label="Open settings"
-          onClick={onOpenSettings}
-          title="Settings"
-          style={{
-            width: 36,
-            height: 36,
-            padding: 0,
-            borderRadius: 10,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginRight: 8,
-          }}
-        >
-          <Settings size={16} />
-        </button>
-
         <span className="welcome-user">
           Hi, <strong>{accountName}!</strong>
         </span>
