@@ -16,7 +16,6 @@ export function WorkspaceHeader({
   setProfileOpen,
   setAccountOpen,
   onSetActive,
-  onOpenSettings,
   onSignOut,
 }: {
   active: string;
@@ -30,7 +29,6 @@ export function WorkspaceHeader({
   setProfileOpen: (value: boolean | ((value: boolean) => boolean)) => void;
   setAccountOpen: (value: boolean) => void;
   onSetActive: (label: string) => void;
-  onOpenSettings: () => void;
   onSignOut: () => Promise<void>;
 }) {
   const [editProfileOpen, setEditProfileOpen] = useState(false);

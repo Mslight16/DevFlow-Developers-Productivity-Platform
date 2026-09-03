@@ -233,7 +233,6 @@ const accountName =
           setProfileOpen={setProfileOpen}
           setAccountOpen={setAccountOpen}
           onSetActive={setActive}
-          onOpenSettings={() => router.push("/settings")}
           onSignOut={signOut}
         />
 
