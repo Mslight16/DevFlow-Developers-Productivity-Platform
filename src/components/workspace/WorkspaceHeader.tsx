@@ -1,7 +1,16 @@
+"use client";
+
 import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
-import { GitBranch, LogOut, Search, UserCircle } from "lucide-react";
+import {
+  GitBranch,
+  LogOut,
+  Search,
+  UserCircle,
+  X,
+} from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
 export function WorkspaceHeader({
@@ -26,11 +35,15 @@ export function WorkspaceHeader({
   user: User | null;
   profileOpen: boolean;
   accountOpen: boolean;
-  setProfileOpen: (value: boolean | ((value: boolean) => boolean)) => void;
+  setProfileOpen: (
+    value: boolean | ((value: boolean) => boolean),
+  ) => void;
   setAccountOpen: (value: boolean) => void;
   onSetActive: (label: string) => void;
   onSignOut: () => Promise<void>;
 }) {
+  const router = useRouter();
+
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -40,6 +53,8 @@ export function WorkspaceHeader({
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState(avatarUrl || "");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const initial = accountName.trim().charAt(0).toUpperCase() || "U";
 
   async function saveProfile() {
     const trimmedName = displayName.trim();
@@ -94,7 +109,9 @@ export function WorkspaceHeader({
       return;
     }
 
-    const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
+    const { data } = supabase.storage
+      .from("avatars")
+      .getPublicUrl(filePath);
 
     const { error: updateError } = await supabase.auth.updateUser({
       data: {
@@ -126,369 +143,231 @@ export function WorkspaceHeader({
         return;
       }
 
-      window.location.href = "/login";
+      router.push("/login");
     } catch {
       alert("Something went wrong while deleting your account.");
     }
   }
 
+  function openEditProfile() {
+    setDisplayName(accountName);
+    setProfileError("");
+    setEditProfileOpen(true);
+  }
+
   return (
-    <header className="topbar" style={{ position: "relative" }}>
-      <div className="breadcrumbs">
-        <span>Workspace</span>
-        <i>/</i>
-        <strong>{active}</strong>
+    <header className="relative flex min-h-[72px] items-center justify-between gap-4 border-b border-[var(--line)] bg-[var(--background)] px-4 py-3 shadow-[var(--shadow-raised-sm)] sm:px-6">
+      {/* Left */}
+      <div className="flex min-w-0 items-center gap-4">
+        <div className="hidden items-center gap-2 text-xs sm:flex">
+          <span className="font-medium text-[var(--muted)]">
+            Workspace
+          </span>
+
+          <span className="text-[var(--line)]">/</span>
+
+          <strong className="truncate text-[var(--ink)]">
+            {active}
+          </strong>
+        </div>
+
+        <label className="flex min-w-0 items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--background)] px-3 py-2.5 shadow-[var(--shadow-inset-sm)] transition-all focus-within:border-[var(--primary)] focus-within:shadow-[var(--shadow-inset)] sm:w-[240px]">
+          <Search
+            size={16}
+            className="shrink-0 text-[var(--muted)]"
+          />
+
+          <input
+            aria-label="Search tasks"
+            placeholder="Search tasks"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            className="min-w-0 flex-1 bg-transparent text-xs text-[var(--ink)] outline-none placeholder:text-[var(--muted)]"
+          />
+        </label>
       </div>
 
-      <label className="search-trigger">
-        <Search size={17} />
-
-        <input
-          aria-label="Search tasks"
-          placeholder="Search tasks"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
-      </label>
-
-      <div
-        style={{ position: "relative", display: "flex", alignItems: "center" }}
-      >
-        <span className="welcome-user">
-          Hi, <strong>{accountName}!</strong>
+      {/* Right */}
+      <div className="relative flex shrink-0 items-center gap-3">
+        <span className="hidden text-xs text-[var(--muted)] md:block">
+          Hi,{" "}
+          <strong className="font-bold text-[var(--ink)]">
+            {accountName}!
+          </strong>
         </span>
 
         <button
-          className="icon-button"
+          type="button"
           aria-label="Open profile menu"
           aria-expanded={profileOpen}
-          type="button"
           onClick={() => setProfileOpen((open) => !open)}
-          style={{
-            width: 38,
-            height: 38,
-            padding: 0,
-            borderRadius: "50%",
-            overflow: "hidden",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+          className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[var(--background)] text-sm font-bold text-[var(--primary)] shadow-[var(--shadow-raised-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:text-[var(--primary-hover)] active:shadow-[var(--shadow-inset-sm)]"
         >
           {avatarUrl ? (
             <Image
               src={avatarUrl}
               alt="Profile"
-              width={38}
-              height={38}
+              width={40}
+              height={40}
               unoptimized
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                borderRadius: "50%",
-              }}
+              className="h-full w-full object-cover"
             />
           ) : (
-            <UserCircle size={30} />
+            <span>{initial}</span>
           )}
         </button>
 
+        {/* Profile menu */}
         {profileOpen && (
           <div
             role="dialog"
             aria-label="Profile menu"
-            style={{
-              position: "absolute",
-              top: "calc(100% + 8px)",
-              right: 0,
-              width: 300,
-              background: "#252d38",
-              border: "1px solid #3a4552",
-              borderRadius: 14,
-              boxShadow: "0 18px 45px rgba(0, 0, 0, 0.4)",
-              zIndex: 1000,
-              overflow: "hidden",
-            }}
+            className="absolute right-0 top-[calc(100%+10px)] z-[1000] w-[min(300px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--background)] shadow-[var(--shadow-raised)]"
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "16px",
-              }}
-            >
-              <div
-                style={{
-                  width: 42,
-                  height: 42,
-                  minWidth: 42,
-                  borderRadius: "50%",
-                  overflow: "hidden",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: "#17382e",
-                  color: "#d8eee5",
-                  fontSize: 16,
-                  fontWeight: 600,
-                }}
-              >
+            <div className="flex items-center gap-3 p-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--background)] text-sm font-bold text-[var(--primary)] shadow-[var(--shadow-inset-sm)]">
                 {avatarUrl ? (
                   <Image
                     src={avatarUrl}
                     alt="Profile"
-                    width={42}
-                    height={42}
+                    width={44}
+                    height={44}
                     unoptimized
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
+                    className="h-full w-full object-cover"
                   />
                 ) : (
-                  accountName.charAt(0).toUpperCase()
+                  initial
                 )}
               </div>
 
-              <div
-                style={{
-                  minWidth: 0,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 3,
-                }}
-              >
-                <strong
-                  style={{
-                    fontSize: 14,
-                    color: "#f1f5f4",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
+              <div className="min-w-0">
+                <strong className="block truncate text-sm font-bold text-[var(--ink)]">
                   {accountName}
                 </strong>
 
-                <span
-                  style={{
-                    fontSize: 12,
-                    color: "#8d9995",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    maxWidth: 210,
-                  }}
-                >
+                <span className="mt-0.5 block truncate text-[11px] text-[var(--muted)]">
                   {user?.email || "No email on file"}
                 </span>
               </div>
             </div>
 
-            <div
-              style={{
-                height: 1,
-                background: "#3a4552",
-              }}
-            />
+            <div className="mx-4 h-px bg-[var(--line)]" />
 
-            <button
-              type="button"
-              onClick={() => {
-                setProfileOpen(false);
-                setAccountOpen(true);
-              }}
-              style={{
-                width: "100%",
-                border: 0,
-                background: "transparent",
-                color: "#d8dfdd",
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "12px 16px",
-                cursor: "pointer",
-                textAlign: "left",
-                fontSize: 14,
-              }}
-              onMouseEnter={(event) => {
-                event.currentTarget.style.background = "rgba(255,255,255,0.06)";
-              }}
-              onMouseLeave={(event) => {
-                event.currentTarget.style.background = "transparent";
-              }}
-            >
-              <UserCircle size={18} />
+            <div className="p-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setProfileOpen(false);
+                  setAccountOpen(true);
+                }}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all hover:bg-[var(--background)] hover:shadow-[var(--shadow-raised-sm)]"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--background)] text-[var(--primary)] shadow-[var(--shadow-inset-sm)]">
+                  <UserCircle size={17} />
+                </span>
 
-              <span>
-                <strong
-                  style={{
-                    display: "block",
-                    fontSize: 14,
-                    fontWeight: 500,
-                  }}
-                >
-                  Account
-                </strong>
+                <span className="min-w-0">
+                  <strong className="block text-xs font-bold text-[var(--ink)]">
+                    Account
+                  </strong>
 
-                <small
-                  style={{
-                    display: "block",
-                    marginTop: 2,
-                    color: "#7f8d87",
-                    fontSize: 11,
-                  }}
-                >
-                  {user?.email || "Manage your account"}
-                </small>
-              </span>
-            </button>
+                  <small className="mt-0.5 block truncate text-[10px] text-[var(--muted)]">
+                    {user?.email || "Manage your account"}
+                  </small>
+                </span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                setProfileOpen(false);
-                onSetActive("GitHub");
-              }}
-              style={{
-                width: "100%",
-                border: 0,
-                background: "transparent",
-                color: "#d8dfdd",
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "12px 16px",
-                cursor: "pointer",
-                textAlign: "left",
-                fontSize: 14,
-              }}
-              onMouseEnter={(event) => {
-                event.currentTarget.style.background = "rgba(255,255,255,0.06)";
-              }}
-              onMouseLeave={(event) => {
-                event.currentTarget.style.background = "transparent";
-              }}
-            >
-              <GitBranch size={18} />
+              <button
+                type="button"
+                onClick={() => {
+                  setProfileOpen(false);
+                  onSetActive("GitHub");
+                }}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all hover:bg-[var(--background)] hover:shadow-[var(--shadow-raised-sm)]"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--background)] text-[var(--primary)] shadow-[var(--shadow-inset-sm)]">
+                  <GitBranch size={17} />
+                </span>
 
-              <span>
-                <strong
-                  style={{
-                    display: "block",
-                    fontSize: 14,
-                    fontWeight: 500,
-                  }}
-                >
-                  GitHub
-                </strong>
+                <span>
+                  <strong className="block text-xs font-bold text-[var(--ink)]">
+                    GitHub
+                  </strong>
 
-                <small
-                  style={{
-                    display: "block",
-                    marginTop: 2,
-                    color: "#7f8d87",
-                    fontSize: 11,
-                  }}
-                >
-                  Connect and manage GitHub
-                </small>
-              </span>
-            </button>
+                  <small className="mt-0.5 block text-[10px] text-[var(--muted)]">
+                    Connect and manage GitHub
+                  </small>
+                </span>
+              </button>
+            </div>
 
-            <div
-              style={{
-                height: 1,
-                background: "#3a4552",
-                margin: "4px 0",
-              }}
-            />
+            <div className="mx-4 h-px bg-[var(--line)]" />
 
-            <button
-              type="button"
-              onClick={() => void onSignOut()}
-              style={{
-                width: "100%",
-                border: 0,
-                background: "transparent",
-                color: "#ef9a9a",
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "12px 16px",
-                cursor: "pointer",
-                textAlign: "left",
-                fontSize: 14,
-              }}
-              onMouseEnter={(event) => {
-                event.currentTarget.style.background = "rgba(239,154,154,0.08)";
-              }}
-              onMouseLeave={(event) => {
-                event.currentTarget.style.background = "transparent";
-              }}
-            >
-              <LogOut size={18} />
+            <div className="p-2">
+              <button
+                type="button"
+                onClick={() => void onSignOut()}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[var(--error)] transition-all hover:bg-[var(--background)] hover:shadow-[var(--shadow-raised-sm)]"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--background)] shadow-[var(--shadow-inset-sm)]">
+                  <LogOut size={17} />
+                </span>
 
-              <span>Sign out</span>
-            </button>
+                <span className="text-xs font-bold">
+                  Sign out
+                </span>
+              </button>
+            </div>
           </div>
         )}
 
+        {/* Account dialog */}
         {accountOpen && (
-          <div className="modal-backdrop">
-            <section className="account-dialog">
-              <div className="account-dialog-header">
-                <div>
-                  <p className="eyebrow">Account</p>
-                  <h2>Account details</h2>
-                  <p className="subtitle">Manage your DevFlow account.</p>
-                </div>
-                <button
-                  type="button"
-                  className="icon-button"
-                  onClick={() => setAccountOpen(false)}
-                  aria-label="Close account dialog"
-                >
-                  ×
-                </button>
-              </div>
+          <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/25 p-4 backdrop-blur-[3px]">
+            <section className="w-full max-w-md rounded-3xl bg-[var(--background)] p-5 shadow-2xl sm:p-7">
+              <DialogHeader
+                eyebrow="Account"
+                title="Account details"
+                subtitle="Manage your DevFlow account."
+                onClose={() => setAccountOpen(false)}
+              />
 
-              <div className="account-details">
-                <div className="account-profile-preview">
-                  {avatarUrl ? (
-                    <Image
-                      src={avatarUrl}
-                      alt={accountName}
-                      width={64}
-                      height={64}
-                      unoptimized
-                    />
-                  ) : (
-                    <span>{accountName.charAt(0).toUpperCase()}</span>
-                  )}
+              <div className="mt-6 grid gap-4">
+                <div className="flex items-center gap-4 rounded-2xl bg-[var(--background)] p-4 shadow-[var(--shadow-inset)]">
+                  <ProfileAvatar
+                    src={avatarUrl}
+                    initial={initial}
+                    size={64}
+                  />
+
+                  <div className="min-w-0">
+                    <strong className="block truncate text-sm font-bold text-[var(--ink)]">
+                      {accountName}
+                    </strong>
+
+                    <span className="mt-1 block truncate text-[11px] text-[var(--muted)]">
+                      {user?.email || "No email"}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="account-field">
-                  <span className="account-field-label">Display name</span>
-                  <strong>{accountName}</strong>
-                </div>
+                <AccountField
+                  label="Display name"
+                  value={accountName}
+                />
 
-                <div className="account-field">
-                  <span className="account-field-label">Email</span>
-                  <strong>{user?.email || "No email"}</strong>
-                </div>
+                <AccountField
+                  label="Email"
+                  value={user?.email || "No email"}
+                />
 
-                <div className="account-actions">
+                <div className="grid gap-2 sm:grid-cols-2">
                   <button
                     type="button"
-                    className="primary-button"
+                    className="rounded-xl bg-[var(--primary)] px-4 py-3 text-xs font-bold text-white shadow-[var(--shadow-raised-sm)] transition-all hover:bg-[var(--primary-hover)] active:shadow-[var(--shadow-inset-sm)]"
                     onClick={() => {
-                      setDisplayName(accountName);
-                      setProfileError("");
-                      setEditProfileOpen(true);
+                      setAccountOpen(false);
+                      openEditProfile();
                     }}
                   >
                     Edit profile
@@ -496,8 +375,11 @@ export function WorkspaceHeader({
 
                   <button
                     type="button"
-                    className="secondary-button"
-                    onClick={() => setDeleteAccountOpen(true)}
+                    className="rounded-xl px-4 py-3 text-xs font-bold text-[var(--error)] shadow-[var(--shadow-raised-sm)] transition-all hover:shadow-[var(--shadow-inset-sm)]"
+                    onClick={() => {
+                      setAccountOpen(false);
+                      setDeleteAccountOpen(true);
+                    }}
                   >
                     Delete account
                   </button>
@@ -506,102 +388,107 @@ export function WorkspaceHeader({
             </section>
           </div>
         )}
+
+        {/* Edit profile dialog */}
         {editProfileOpen && (
-          <div className="modal-backdrop">
-            <section className="account-dialog">
-              <div className="account-dialog-header">
-                <div>
-                  <p className="eyebrow">Account</p>
-                  <h2>Edit profile</h2>
-                  <p className="subtitle">Update your profile information.</p>
+          <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/25 p-4 backdrop-blur-[3px]">
+            <section className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl bg-[var(--background)] p-5 shadow-2xl sm:p-7">
+              <DialogHeader
+                eyebrow="Account"
+                title="Edit profile"
+                subtitle="Update your profile information."
+                onClose={() => setEditProfileOpen(false)}
+              />
+
+              <div className="mt-6 grid gap-4">
+                <div className="flex justify-center">
+                  <ProfileAvatar
+                    src={avatarPreview}
+                    initial={initial}
+                    size={76}
+                  />
                 </div>
 
-                <button
-                  type="button"
-                  className="icon-button"
-                  onClick={() => setEditProfileOpen(false)}
-                  aria-label="Close edit profile dialog"
-                >
-                  ×
-                </button>
-              </div>
+                <div className="grid gap-2">
+                  <label className="text-[11px] font-bold text-[var(--ink)]">
+                    Profile picture
+                  </label>
 
-              <div className="account-details">
-                <div className="account-profile-preview">
-                  {avatarPreview ? (
-                    <Image
-                      src={avatarPreview}
-                      alt="Profile"
-                      width={64}
-                      height={64}
-                      className="account-profile-image"
-                    />
-                  ) : (
-                    <span>{accountName.charAt(0).toUpperCase()}</span>
-                  )}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] || null;
+
+                      if (!file) return;
+
+                      setAvatarFile(file);
+                      setAvatarPreview(URL.createObjectURL(file));
+                    }}
+                    className="w-full cursor-pointer rounded-xl border border-[var(--line)] bg-[var(--background)] px-3 py-2.5 text-[11px] text-[var(--muted)] shadow-[var(--shadow-inset-sm)] outline-none file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--primary)] file:px-3 file:py-2 file:text-[10px] file:font-bold file:text-white"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => void uploadAvatar()}
+                    disabled={!avatarFile || uploadingAvatar}
+                    className="w-full rounded-xl px-4 py-3 text-xs font-bold text-[var(--primary)] shadow-[var(--shadow-raised-sm)] transition-all hover:shadow-[var(--shadow-inset-sm)] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {uploadingAvatar
+                      ? "Uploading..."
+                      : "Upload picture"}
+                  </button>
                 </div>
 
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0] || null;
-
-                    if (!file) return;
-
-                    setAvatarFile(file);
-                    setAvatarPreview(URL.createObjectURL(file));
-                  }}
-                  className="input"
-                />
-
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => void uploadAvatar()}
-                  disabled={!avatarFile || uploadingAvatar}
-                >
-                  {uploadingAvatar ? "Uploading..." : "Upload picture"}
-                </button>
-
-                <div className="account-field">
-                  <label className="account-field-label">Display name</label>
+                <div className="grid gap-1.5">
+                  <label className="text-[11px] font-bold text-[var(--ink)]">
+                    Display name
+                  </label>
 
                   <input
                     type="text"
                     value={displayName}
-                    onChange={(event) => setDisplayName(event.target.value)}
-                    className="input"
+                    onChange={(event) =>
+                      setDisplayName(event.target.value)
+                    }
+                    className="w-full rounded-xl border border-[var(--line)] bg-[var(--background)] px-3.5 py-3 text-xs text-[var(--ink)] shadow-[var(--shadow-inset-sm)] outline-none transition-all placeholder:text-[var(--muted)] focus:border-[var(--primary)] focus:shadow-[var(--shadow-inset)]"
                     required
                   />
-                  {profileError && <p className="form-error">{profileError}</p>}
+
+                  {profileError && (
+                    <p className="text-[10px] font-medium text-[var(--error)]">
+                      {profileError}
+                    </p>
+                  )}
                 </div>
 
-                <div className="account-field">
-                  <label className="account-field-label">Email</label>
+                <div className="grid gap-1.5">
+                  <label className="text-[11px] font-bold text-[var(--ink)]">
+                    Email
+                  </label>
 
                   <input
                     type="email"
                     value={user?.email || ""}
                     disabled
-                    className="input"
+                    className="w-full rounded-xl border border-[var(--line)] bg-[var(--background)] px-3.5 py-3 text-xs text-[var(--muted)] shadow-[var(--shadow-inset-sm)] outline-none"
                   />
                 </div>
 
-                <div className="account-actions">
+                <div className="grid gap-2 sm:grid-cols-2">
                   <button
                     type="button"
-                    className="primary-button"
                     onClick={() => void saveProfile()}
                     disabled={savingProfile}
+                    className="rounded-xl bg-[var(--primary)] px-4 py-3 text-xs font-bold text-white shadow-[var(--shadow-raised-sm)] transition-all hover:bg-[var(--primary-hover)] active:shadow-[var(--shadow-inset-sm)] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {savingProfile ? "Saving..." : "Save Changes"}
+                    {savingProfile ? "Saving..." : "Save changes"}
                   </button>
 
                   <button
                     type="button"
-                    className="secondary-button"
                     onClick={() => setEditProfileOpen(false)}
+                    className="rounded-xl px-4 py-3 text-xs font-bold text-[var(--muted)] shadow-[var(--shadow-raised-sm)] transition-all hover:text-[var(--ink)] hover:shadow-[var(--shadow-inset-sm)]"
                   >
                     Cancel
                   </button>
@@ -610,38 +497,28 @@ export function WorkspaceHeader({
             </section>
           </div>
         )}
+
+        {/* Delete account dialog */}
         {deleteAccountOpen && (
-          <div className="modal-backdrop">
-            <section className="account-dialog">
-              <div className="account-dialog-header">
-                <div>
-                  <p className="eyebrow">Danger zone</p>
-                  <h2>Delete account?</h2>
-                  <p className="subtitle">
-                    Are you sure you want to delete your DevFlow account? This
-                    action cannot be undone.
-                  </p>
+          <div className="fixed inset-0 z-[1300] flex items-center justify-center bg-black/25 p-4 backdrop-blur-[3px]">
+            <section className="w-full max-w-md rounded-3xl bg-[var(--background)] p-5 shadow-2xl sm:p-7">
+              <DialogHeader
+                eyebrow="Danger zone"
+                title="Delete account?"
+                subtitle="Are you sure you want to delete your DevFlow account? This action cannot be undone."
+                onClose={() => setDeleteAccountOpen(false)}
+              />
+
+              <div className="mt-6 grid gap-5">
+                <div className="rounded-2xl bg-[var(--background)] p-4 text-xs leading-6 text-[var(--error)] shadow-[var(--shadow-inset)]">
+                  Your account and associated data may be permanently
+                  deleted.
                 </div>
 
-                <button
-                  type="button"
-                  className="icon-button"
-                  onClick={() => setDeleteAccountOpen(false)}
-                  aria-label="Close delete account dialog"
-                >
-                  ×
-                </button>
-              </div>
-
-              <div className="account-details">
-                <p className="form-error">
-                  Your account and associated data may be permanently deleted.
-                </p>
-
-                <div className="account-actions">
+                <div className="grid gap-2 sm:grid-cols-2">
                   <button
                     type="button"
-                    className="secondary-button"
+                    className="rounded-xl px-4 py-3 text-xs font-bold text-[var(--muted)] shadow-[var(--shadow-raised-sm)] transition-all hover:shadow-[var(--shadow-inset-sm)]"
                     onClick={() => setDeleteAccountOpen(false)}
                   >
                     Cancel
@@ -649,7 +526,7 @@ export function WorkspaceHeader({
 
                   <button
                     type="button"
-                    className="primary-button"
+                    className="rounded-xl bg-[var(--error)] px-4 py-3 text-xs font-bold text-white shadow-[var(--shadow-raised-sm)] transition-all hover:opacity-90 active:shadow-[var(--shadow-inset-sm)]"
                     onClick={() => {
                       setDeleteAccountOpen(false);
                       setDeleteConfirmOpen(true);
@@ -662,39 +539,28 @@ export function WorkspaceHeader({
             </section>
           </div>
         )}
+
+        {/* Final confirmation */}
         {deleteConfirmOpen && (
-          <div className="modal-backdrop">
-            <section className="account-dialog">
-              <div className="account-dialog-header">
-                <div>
-                  <p className="eyebrow">Final confirmation</p>
-                  <h2>Are you absolutely sure?</h2>
-                  <p className="subtitle">
-                    This will permanently delete your DevFlow account. You will
-                    not be able to recover it.
-                  </p>
+          <div className="fixed inset-0 z-[1400] flex items-center justify-center bg-black/30 p-4 backdrop-blur-[4px]">
+            <section className="w-full max-w-md rounded-3xl bg-[var(--background)] p-5 shadow-2xl sm:p-7">
+              <DialogHeader
+                eyebrow="Final confirmation"
+                title="Are you absolutely sure?"
+                subtitle="This will permanently delete your DevFlow account. You will not be able to recover it."
+                onClose={() => setDeleteConfirmOpen(false)}
+              />
+
+              <div className="mt-6 grid gap-5">
+                <div className="rounded-2xl bg-[var(--background)] p-4 text-xs leading-6 text-[var(--error)] shadow-[var(--shadow-inset)]">
+                  Please confirm that you really want to permanently
+                  delete your account.
                 </div>
 
-                <button
-                  type="button"
-                  className="icon-button"
-                  onClick={() => setDeleteConfirmOpen(false)}
-                  aria-label="Close confirmation dialog"
-                >
-                  ×
-                </button>
-              </div>
-
-              <div className="account-details">
-                <p className="form-error">
-                  Please confirm that you really want to permanently delete your
-                  account.
-                </p>
-
-                <div className="account-actions">
+                <div className="grid gap-2 sm:grid-cols-2">
                   <button
                     type="button"
-                    className="secondary-button"
+                    className="rounded-xl px-4 py-3 text-xs font-bold text-[var(--muted)] shadow-[var(--shadow-raised-sm)] transition-all hover:shadow-[var(--shadow-inset-sm)]"
                     onClick={() => setDeleteConfirmOpen(false)}
                   >
                     Cancel
@@ -702,7 +568,7 @@ export function WorkspaceHeader({
 
                   <button
                     type="button"
-                    className="primary-button"
+                    className="rounded-xl bg-[var(--error)] px-4 py-3 text-xs font-bold text-white shadow-[var(--shadow-raised-sm)] transition-all hover:opacity-90 active:shadow-[var(--shadow-inset-sm)]"
                     onClick={() => void deleteAccount()}
                   >
                     Yes, delete my account
@@ -714,5 +580,98 @@ export function WorkspaceHeader({
         )}
       </div>
     </header>
+  );
+}
+
+function ProfileAvatar({
+  src,
+  initial,
+  size,
+}: {
+  src?: string;
+  initial: string;
+  size: number;
+}) {
+  return (
+    <div
+      className="flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--background)] font-bold text-[var(--primary)] shadow-[var(--shadow-inset-sm)]"
+      style={{
+        width: size,
+        height: size,
+        fontSize: Math.max(14, Math.round(size * 0.28)),
+      }}
+    >
+      {src ? (
+        <Image
+          src={src}
+          alt="Profile"
+          width={size}
+          height={size}
+          unoptimized
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        initial
+      )}
+    </div>
+  );
+}
+
+function DialogHeader({
+  eyebrow,
+  title,
+  subtitle,
+  onClose,
+}: {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <div className="min-w-0">
+        <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[var(--primary)]">
+          {eyebrow}
+        </p>
+
+        <h2 className="mt-1 text-lg font-bold tracking-tight text-[var(--ink)]">
+          {title}
+        </h2>
+
+        <p className="mt-1 text-[10px] leading-5 text-[var(--muted)]">
+          {subtitle}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label={`Close ${title}`}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[var(--muted)] shadow-[var(--shadow-raised-sm)] transition-all hover:text-[var(--ink)] hover:shadow-[var(--shadow-inset-sm)]"
+      >
+        <X size={16} />
+      </button>
+    </div>
+  );
+}
+
+function AccountField({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-xl bg-[var(--background)] px-4 py-3 shadow-[var(--shadow-inset-sm)]">
+      <span className="block text-[9px] font-bold uppercase tracking-[0.12em] text-[var(--muted)]">
+        {label}
+      </span>
+
+      <strong className="mt-1 block truncate text-xs font-semibold text-[var(--ink)]">
+        {value}
+      </strong>
+    </div>
   );
 }
