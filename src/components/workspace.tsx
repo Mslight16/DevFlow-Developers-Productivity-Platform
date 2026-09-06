@@ -41,6 +41,9 @@ export default function Workspace() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
+  // Mobile sidebar state
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
   const router = useRouter();
 
   const refresh = useCallback(async () => {
@@ -135,6 +138,7 @@ export default function Workspace() {
         setUser(null);
         setProfileOpen(false);
         setAccountOpen(false);
+        setMobileSidebarOpen(false);
         router.replace("/login");
         return;
       }
@@ -151,6 +155,20 @@ export default function Workspace() {
       subscription.unsubscribe();
     };
   }, [refresh, router]);
+
+  // Prevent the page behind the mobile drawer from scrolling.
+  useEffect(() => {
+    if (!mobileSidebarOpen) {
+      document.body.style.overflow = "";
+      return;
+    }
+
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileSidebarOpen]);
 
   const notify = (message: string) => {
     setToast(message);
@@ -212,6 +230,7 @@ export default function Workspace() {
   async function signOut() {
     setProfileOpen(false);
     setAccountOpen(false);
+    setMobileSidebarOpen(false);
 
     await supabase.auth.signOut();
     router.push("/login");
@@ -249,26 +268,25 @@ export default function Workspace() {
         ? "snippet"
         : "task";
 
+  function handleNavigation(label: string) {
+    setActive(label);
+    setProfileOpen(false);
+    setMobileSidebarOpen(false);
+  }
+
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--ink)]">
-
-      {/* Desktop / main workspace layout */}
       <div className="flex min-h-screen">
+        {/* Desktop sidebar + mobile drawer */}
+        <WorkspaceSidebar
+          active={active}
+          onSelect={handleNavigation}
+          mobileOpen={mobileSidebarOpen}
+          onMobileClose={() => setMobileSidebarOpen(false)}
+        />
 
-        {/* Sidebar */}
-        <div className="w-[240px] shrink-0">
-          <WorkspaceSidebar
-            active={active}
-            onSelect={(label) => {
-              setActive(label);
-              setProfileOpen(false);
-            }}
-          />
-        </div>
-
-        {/* Main area */}
+        {/* Main workspace */}
         <div className="min-w-0 flex-1">
-
           {/* Header */}
           <WorkspaceHeader
             active={active}
@@ -281,16 +299,14 @@ export default function Workspace() {
             accountOpen={accountOpen}
             setProfileOpen={setProfileOpen}
             setAccountOpen={setAccountOpen}
-            onSetActive={(label) => {
-              setActive(label);
-              setProfileOpen(false);
-            }}
+            mobileSidebarOpen={mobileSidebarOpen}
+            setMobileSidebarOpen={setMobileSidebarOpen}
+            onSetActive={handleNavigation}
             onSignOut={signOut}
           />
 
           {/* Page content */}
           <main className="mx-auto w-full max-w-[1500px] px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
-
             {/* Page heading */}
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="min-w-0">

@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/browser";
 import {
   GitBranch,
   LogOut,
+  Menu,
   Search,
   UserCircle,
   X,
@@ -24,6 +25,8 @@ export function WorkspaceHeader({
   accountOpen,
   setProfileOpen,
   setAccountOpen,
+  mobileSidebarOpen,
+  setMobileSidebarOpen,
   onSetActive,
   onSignOut,
 }: {
@@ -39,6 +42,8 @@ export function WorkspaceHeader({
     value: boolean | ((value: boolean) => boolean),
   ) => void;
   setAccountOpen: (value: boolean) => void;
+  mobileSidebarOpen: boolean;
+  setMobileSidebarOpen: (value: boolean) => void;
   onSetActive: (label: string) => void;
   onSignOut: () => Promise<void>;
 }) {
@@ -156,10 +161,32 @@ export function WorkspaceHeader({
   }
 
   return (
-    <header className="relative flex min-h-[72px] items-center justify-between gap-4 border-b border-[var(--line)] bg-[var(--background)] px-4 py-3 shadow-[var(--shadow-raised-sm)] sm:px-6">
-      {/* Left */}
-      <div className="flex min-w-0 items-center gap-4">
-        <div className="hidden items-center gap-2 text-xs sm:flex">
+    <header className="relative flex min-h-[68px] w-full items-center justify-between gap-2 border-b border-[var(--line)] bg-[var(--background)] px-3 py-3 shadow-[var(--shadow-raised-sm)] sm:min-h-[72px] sm:gap-4 sm:px-6">
+      {/* Left side */}
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
+        {/* Mobile hamburger */}
+        <button
+          type="button"
+          aria-label={
+            mobileSidebarOpen
+              ? "Close navigation menu"
+              : "Open navigation menu"
+          }
+          aria-expanded={mobileSidebarOpen}
+          onClick={() =>
+            setMobileSidebarOpen(!mobileSidebarOpen)
+          }
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--background)] text-[var(--ink)] shadow-[var(--shadow-raised-sm)] transition-all duration-200 hover:text-[var(--primary)] active:shadow-[var(--shadow-inset-sm)] md:hidden"
+        >
+          {mobileSidebarOpen ? (
+            <X size={19} />
+          ) : (
+            <Menu size={19} />
+          )}
+        </button>
+
+        {/* Desktop breadcrumb */}
+        <div className="hidden min-w-0 items-center gap-2 text-xs sm:flex">
           <span className="font-medium text-[var(--muted)]">
             Workspace
           </span>
@@ -171,7 +198,8 @@ export function WorkspaceHeader({
           </strong>
         </div>
 
-        <label className="flex min-w-0 items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--background)] px-3 py-2.5 shadow-[var(--shadow-inset-sm)] transition-all focus-within:border-[var(--primary)] focus-within:shadow-[var(--shadow-inset)] sm:w-[240px]">
+        {/* Search */}
+        <label className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--background)] px-3 py-2.5 shadow-[var(--shadow-inset-sm)] transition-all focus-within:border-[var(--primary)] focus-within:shadow-[var(--shadow-inset)] sm:flex-none sm:w-[240px]">
           <Search
             size={16}
             className="shrink-0 text-[var(--muted)]"
@@ -182,26 +210,28 @@ export function WorkspaceHeader({
             placeholder="Search tasks"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="min-w-0 flex-1 bg-transparent text-xs text-[var(--ink)] outline-none placeholder:text-[var(--muted)]"
+            className="min-w-0 w-full flex-1 bg-transparent text-xs text-[var(--ink)] outline-none placeholder:text-[var(--muted)]"
           />
         </label>
       </div>
 
-      {/* Right */}
-      <div className="relative flex shrink-0 items-center gap-3">
-        <span className="hidden text-xs text-[var(--muted)] md:block">
+      {/* Right side */}
+      <div className="relative flex shrink-0 items-center gap-2 sm:gap-3">
+        {/* Greeting - hidden on mobile */}
+        <span className="hidden text-xs text-[var(--muted)] lg:block">
           Hi,{" "}
           <strong className="font-bold text-[var(--ink)]">
             {accountName}!
           </strong>
         </span>
 
+        {/* Profile button */}
         <button
           type="button"
           aria-label="Open profile menu"
           aria-expanded={profileOpen}
           onClick={() => setProfileOpen((open) => !open)}
-          className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[var(--background)] text-sm font-bold text-[var(--primary)] shadow-[var(--shadow-raised-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:text-[var(--primary-hover)] active:shadow-[var(--shadow-inset-sm)]"
+          className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--background)] text-sm font-bold text-[var(--primary)] shadow-[var(--shadow-raised-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:text-[var(--primary-hover)] active:shadow-[var(--shadow-inset-sm)]"
         >
           {avatarUrl ? (
             <Image
@@ -222,7 +252,7 @@ export function WorkspaceHeader({
           <div
             role="dialog"
             aria-label="Profile menu"
-            className="absolute right-0 top-[calc(100%+10px)] z-[1000] w-[min(300px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--background)] shadow-[var(--shadow-raised)]"
+            className="absolute right-0 top-[calc(100%+10px)] z-[1000] w-[min(300px,calc(100vw-24px))] overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--background)] shadow-[var(--shadow-raised)]"
           >
             <div className="flex items-center gap-3 p-4">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--background)] text-sm font-bold text-[var(--primary)] shadow-[var(--shadow-inset-sm)]">
@@ -418,12 +448,15 @@ export function WorkspaceHeader({
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
                     onChange={(event) => {
-                      const file = event.target.files?.[0] || null;
+                      const file =
+                        event.target.files?.[0] || null;
 
                       if (!file) return;
 
                       setAvatarFile(file);
-                      setAvatarPreview(URL.createObjectURL(file));
+                      setAvatarPreview(
+                        URL.createObjectURL(file),
+                      );
                     }}
                     className="w-full cursor-pointer rounded-xl border border-[var(--line)] bg-[var(--background)] px-3 py-2.5 text-[11px] text-[var(--muted)] shadow-[var(--shadow-inset-sm)] outline-none file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--primary)] file:px-3 file:py-2 file:text-[10px] file:font-bold file:text-white"
                   />
@@ -482,12 +515,16 @@ export function WorkspaceHeader({
                     disabled={savingProfile}
                     className="rounded-xl bg-[var(--primary)] px-4 py-3 text-xs font-bold text-white shadow-[var(--shadow-raised-sm)] transition-all hover:bg-[var(--primary-hover)] active:shadow-[var(--shadow-inset-sm)] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {savingProfile ? "Saving..." : "Save changes"}
+                    {savingProfile
+                      ? "Saving..."
+                      : "Save changes"}
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => setEditProfileOpen(false)}
+                    onClick={() =>
+                      setEditProfileOpen(false)
+                    }
                     className="rounded-xl px-4 py-3 text-xs font-bold text-[var(--muted)] shadow-[var(--shadow-raised-sm)] transition-all hover:text-[var(--ink)] hover:shadow-[var(--shadow-inset-sm)]"
                   >
                     Cancel
@@ -506,20 +543,24 @@ export function WorkspaceHeader({
                 eyebrow="Danger zone"
                 title="Delete account?"
                 subtitle="Are you sure you want to delete your DevFlow account? This action cannot be undone."
-                onClose={() => setDeleteAccountOpen(false)}
+                onClose={() =>
+                  setDeleteAccountOpen(false)
+                }
               />
 
               <div className="mt-6 grid gap-5">
                 <div className="rounded-2xl bg-[var(--background)] p-4 text-xs leading-6 text-[var(--error)] shadow-[var(--shadow-inset)]">
-                  Your account and associated data may be permanently
-                  deleted.
+                  Your account and associated data may be
+                  permanently deleted.
                 </div>
 
                 <div className="grid gap-2 sm:grid-cols-2">
                   <button
                     type="button"
                     className="rounded-xl px-4 py-3 text-xs font-bold text-[var(--muted)] shadow-[var(--shadow-raised-sm)] transition-all hover:shadow-[var(--shadow-inset-sm)]"
-                    onClick={() => setDeleteAccountOpen(false)}
+                    onClick={() =>
+                      setDeleteAccountOpen(false)
+                    }
                   >
                     Cancel
                   </button>
@@ -548,20 +589,24 @@ export function WorkspaceHeader({
                 eyebrow="Final confirmation"
                 title="Are you absolutely sure?"
                 subtitle="This will permanently delete your DevFlow account. You will not be able to recover it."
-                onClose={() => setDeleteConfirmOpen(false)}
+                onClose={() =>
+                  setDeleteConfirmOpen(false)
+                }
               />
 
               <div className="mt-6 grid gap-5">
                 <div className="rounded-2xl bg-[var(--background)] p-4 text-xs leading-6 text-[var(--error)] shadow-[var(--shadow-inset)]">
-                  Please confirm that you really want to permanently
-                  delete your account.
+                  Please confirm that you really want to
+                  permanently delete your account.
                 </div>
 
                 <div className="grid gap-2 sm:grid-cols-2">
                   <button
                     type="button"
                     className="rounded-xl px-4 py-3 text-xs font-bold text-[var(--muted)] shadow-[var(--shadow-raised-sm)] transition-all hover:shadow-[var(--shadow-inset-sm)]"
-                    onClick={() => setDeleteConfirmOpen(false)}
+                    onClick={() =>
+                      setDeleteConfirmOpen(false)
+                    }
                   >
                     Cancel
                   </button>
@@ -675,3 +720,4 @@ function AccountField({
     </div>
   );
 }
+

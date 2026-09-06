@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/browser";
 
 export default function LoginPage() {
@@ -10,6 +11,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -38,10 +40,7 @@ export default function LoginPage() {
       title="Welcome back"
       subtitle="Sign in to return to your workspace."
     >
-      <form
-        className="mt-7 flex flex-col gap-4"
-        onSubmit={submit}
-      >
+      <form className="mt-7 flex flex-col gap-4" onSubmit={submit}>
         <label className="flex flex-col gap-2 text-[11px] font-bold text-[var(--ink)]">
           Email
           <input
@@ -56,15 +55,32 @@ export default function LoginPage() {
 
         <label className="flex flex-col gap-2 text-[11px] font-bold text-[var(--ink)]">
           Password
-          <input
-            type="password"
-            required
-            minLength={6}
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="h-11 rounded-xl border border-[var(--line)] bg-[var(--background)] px-3.5 text-xs font-medium text-[var(--ink)] outline-none shadow-[var(--shadow-inset-sm)] transition-all placeholder:text-[var(--muted)] focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_rgba(91,141,239,0.12),var(--shadow-inset-sm)]"
-            placeholder="••••••••"
-          />
+
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              minLength={6}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="h-11 w-full rounded-xl border border-[var(--line)] bg-[var(--background)] px-3.5 pr-11 text-xs font-medium text-[var(--ink)] outline-none shadow-[var(--shadow-inset-sm)] transition-all placeholder:text-[var(--muted)] focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_rgba(91,141,239,0.12),var(--shadow-inset-sm)]"
+              placeholder="••••••••"
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-r-xl text-[var(--muted)] transition-colors hover:text-[var(--ink)] focus:outline-none focus:text-[var(--primary)]"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              title={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                <EyeOff size={17} strokeWidth={2} />
+              ) : (
+                <Eye size={17} strokeWidth={2} />
+              )}
+            </button>
+          </div>
         </label>
 
         {error && (
@@ -135,3 +151,4 @@ function AuthFrame({
     </main>
   );
 }
+
