@@ -70,16 +70,6 @@ It combines project management, task tracking, code snippets, GitHub integration
 
 ---
 
-## 📸 Preview
-
-> Add screenshots or a short GIF of the DevFlow workspace here.
-
-<!-- Example:
-![DevFlow Dashboard](./public/screenshots/dashboard.png)
--->
-
----
-
 ## ⚙️ Getting Started
 
 ### 1. Clone the repository
