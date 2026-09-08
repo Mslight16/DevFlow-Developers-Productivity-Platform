@@ -83,6 +83,15 @@ export default function LoginPage() {
           </div>
         </label>
 
+        <div className="flex justify-end">
+  <Link
+    href="/forgot-password"
+    className="text-[11px] font-semibold text-[var(--primary)] transition-colors hover:text-[var(--primary-hover)]"
+  >
+    Forgot password?
+  </Link>
+</div>
+
         {error && (
           <p
             role="alert"
@@ -124,10 +133,10 @@ function AuthFrame({
   children: React.ReactNode;
 }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[var(--background)] px-5 py-10">
+    <main className="flex min-h-screen items-center justify-center  px-5 py-10">
       <div className="w-full max-w-[420px]">
         <div className="mb-7 text-center">
-          <div className="inline-flex items-center text-2xl font-extrabold tracking-tight text-[var(--ink)]">
+          <div className="inline-flex items-center text-4xl font-extrabold tracking-tight text-[var(--ink)]">
             dev<span className="text-[var(--primary)]">flow</span>
           </div>
         </div>

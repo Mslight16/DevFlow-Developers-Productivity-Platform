@@ -7,7 +7,9 @@ export async function middleware(request: NextRequest) {
     cookies: { getAll: () => request.cookies.getAll(), setAll: (values) => values.forEach(({ name, value, options }) => { request.cookies.set(name, value); response = NextResponse.next({ request }); response.cookies.set(name, value, options); }) },
   });
   const { data: { user } } = await supabase.auth.getUser();
-  const isAuth = request.nextUrl.pathname.startsWith("/login") || request.nextUrl.pathname.startsWith("/signup");
+  const isAuth = ["/login", "/signup", "/forgot-password", "/reset-password"].some(
+    (path) => request.nextUrl.pathname.startsWith(path)
+  );
   if (!user && !isAuth) return NextResponse.redirect(new URL("/login", request.url));
   if (user && isAuth) return NextResponse.redirect(new URL("/", request.url));
   return response;

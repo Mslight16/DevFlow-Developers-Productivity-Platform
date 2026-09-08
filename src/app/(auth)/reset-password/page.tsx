@@ -1,52 +1,70 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import Link from "next/link";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/browser";
 
-export default function SignupPage() {
+export default function ResetPasswordPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const supabase = createClient();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setMessage("");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    setLoading(true);
     setError("");
     setMessage("");
 
-    const { data, error: authError } = await createClient().auth.signUp({
-      email,
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
+
+    const { error: updateError } = await createClient().auth.updateUser({
       password,
-      options: {
-        data: {
-          display_name: name,
-        },
-      },
     });
 
-    if (authError) {
-      setError(authError.message);
-    } else if (data.session) {
-      router.push("/");
+    if (updateError) {
+      setError(updateError.message);
     } else {
-      setMessage("Check your email to confirm your account.");
+      setMessage("Your password has been updated successfully.");
+
+      setTimeout(() => {
+        router.push("/login");
+      }, 1500);
     }
 
     setLoading(false);
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-5 py-10">
+    <main className="flex min-h-screen items-center justify-center  px-5 py-10">
       <div className="w-full max-w-[420px]">
         <div className="mb-7 text-center">
           <div className="inline-flex items-center text-4xl font-extrabold tracking-tight text-[var(--ink)]">
@@ -56,69 +74,44 @@ export default function SignupPage() {
 
         <section className="rounded-[24px] border border-[var(--line)] bg-[var(--background)] p-6 shadow-[var(--shadow-raised)] sm:p-8">
           <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.16em] text-[var(--primary)]">
-            Your developer workspace
+            Account recovery
           </p>
 
           <h1 className="text-2xl font-bold tracking-tight text-[var(--ink)]">
-            Create your account
+            Create a new password
           </h1>
 
           <p className="mt-2 text-xs leading-5 text-[var(--muted)]">
-            A calmer place to plan, build, and ship.
+            Enter your new password below.
           </p>
 
           <form className="mt-7 flex flex-col gap-4" onSubmit={submit}>
             <label className="flex flex-col gap-2 text-[11px] font-bold text-[var(--ink)]">
-              Display name
+              New password
+
               <input
+                type="password"
                 required
-                value={name}
-                onChange={(event) => setName(event.target.value)}
+                minLength={6}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
                 className="h-11 rounded-xl border border-[var(--line)] bg-[var(--background)] px-3.5 text-xs font-medium text-[var(--ink)] outline-none shadow-[var(--shadow-inset-sm)] transition-all placeholder:text-[var(--muted)] focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_rgba(91,141,239,0.12),var(--shadow-inset-sm)]"
-                placeholder="Your name"
+                placeholder="••••••••"
               />
             </label>
 
             <label className="flex flex-col gap-2 text-[11px] font-bold text-[var(--ink)]">
-              Email
+              Confirm new password
+
               <input
-                type="email"
+                type="password"
                 required
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                minLength={6}
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
                 className="h-11 rounded-xl border border-[var(--line)] bg-[var(--background)] px-3.5 text-xs font-medium text-[var(--ink)] outline-none shadow-[var(--shadow-inset-sm)] transition-all placeholder:text-[var(--muted)] focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_rgba(91,141,239,0.12),var(--shadow-inset-sm)]"
-                placeholder="you@example.com"
+                placeholder="••••••••"
               />
-            </label>
-
-            <label className="flex flex-col gap-2 text-[11px] font-bold text-[var(--ink)]">
-              Password
-
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  minLength={6}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className="h-11 w-full rounded-xl border border-[var(--line)] bg-[var(--background)] px-3.5 pr-11 text-xs font-medium text-[var(--ink)] outline-none shadow-[var(--shadow-inset-sm)] transition-all placeholder:text-[var(--muted)] focus:border-[var(--primary)] focus:shadow-[0_0_0_3px_rgba(91,141,239,0.12),var(--shadow-inset-sm)]"
-                  placeholder="••••••••"
-                />
-
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((visible) => !visible)}
-                  className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-r-xl text-[var(--muted)] transition-colors hover:text-[var(--ink)] focus:outline-none focus:text-[var(--primary)]"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  title={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <EyeOff size={17} strokeWidth={2} />
-                  ) : (
-                    <Eye size={17} strokeWidth={2} />
-                  )}
-                </button>
-              </div>
             </label>
 
             {error && (
@@ -133,7 +126,7 @@ export default function SignupPage() {
             {message && (
               <p
                 role="status"
-                className="rounded-xl border border-[var(--success)]/20 bg-[var(--success)]/5 px-3.5 py-3 text-[11px] font-semibold leading-5 text-[var(--success)]"
+                className="rounded-xl border border-[var(--primary)]/20 bg-[var(--primary)]/5 px-3.5 py-3 text-[11px] font-semibold leading-5 text-[var(--primary)]"
               >
                 {message}
               </p>
@@ -144,16 +137,15 @@ export default function SignupPage() {
               disabled={loading}
               className="mt-1 h-11 rounded-xl bg-[var(--primary)] px-4 text-xs font-bold text-white shadow-[var(--shadow-raised-sm)] transition-all duration-200 hover:bg-[var(--primary-hover)] active:shadow-[var(--shadow-inset-sm)] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? "Creating..." : "Create account"}
+              {loading ? "Updating..." : "Update password"}
             </button>
 
             <p className="pt-1 text-center text-[11px] font-medium text-[var(--muted)]">
-              Already have an account?{" "}
               <Link
                 href="/login"
                 className="font-bold text-[var(--primary)] transition-colors hover:text-[var(--primary-hover)]"
               >
-                Sign in
+                Back to sign in
               </Link>
             </p>
           </form>
@@ -162,4 +154,3 @@ export default function SignupPage() {
     </main>
   );
 }
-
